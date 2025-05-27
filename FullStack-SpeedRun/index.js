@@ -1,45 +1,42 @@
 import express from "express";
 import dotenv from "dotenv";
-import cors from "cors";
-import db from "./utils/db.connect.js";
-
 dotenv.config();
+import cors from "cors";
+import db from "./utils/db.utils.js";
+
+// routes
+
+import router from "./route/user.route.js";
 
 const app = express();
 
 app.use(
   cors({
-    origin: process.env.BASE_URL,
+    origin: "http://localhost:3000",
+    credentials: true,
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(express.json()); // send json data
-app.use(express.urlencoded({ extended: true })); // that %20 in a url, extended version/latest version do vai
-const port = process.env.PORT || 8000;
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-console.log("PROCESS.ENV: ", process.env.PORT);
+const port = process.env.PORT || 3000;
+console.log(port);
 
 app.get("/", (req, res) => {
-  res.send("Cohort cohort");
+  res.send("Cohort");
 });
-
-app.get("/hitesh", (req, res) => {
-  res.send("Hitesh");
+app.get("/shouvik", (req, res) => {
+  res.send("Shouvik!");
 });
-
 app.get("/piyush", (req, res) => {
-  res.send("Piyush");
+  res.send("Piyush!");
 });
-
-// connect to db
-
 db();
-
+// user routes
+app.use("/api/v1/users", router);
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-  console.log(`http://localhost:${port}`);
+  console.log(`Example app listening on port ${port} \n ${Date.now()}`);
 });
-
-// MONGODB_URI = mongodb+srv://shouvik_2:<db_password>@cluster1.aepynnz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1
