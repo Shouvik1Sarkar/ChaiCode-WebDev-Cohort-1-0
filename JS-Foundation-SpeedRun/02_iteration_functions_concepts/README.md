@@ -1,2 +1,0 @@
-call snd bind
-closure
