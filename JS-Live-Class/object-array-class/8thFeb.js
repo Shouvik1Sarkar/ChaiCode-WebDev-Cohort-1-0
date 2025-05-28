@@ -41,5 +41,29 @@ for (let i = 0; i < teas.length; i++) {
   }
 }
 console.log(count); // 4 bcz oolong teas was removed and one was added
-// Problem:
-// Problem:
+// Problem: create a new array with all the teas with uppercase
+
+let newArr = [];
+
+for (let i = 0; i < teas.length; i++) {
+  newArr.push(teas[i].toUpperCase());
+}
+console.log(newArr);
+
+// Problem: longest tea name
+let teaName = "";
+
+for (let i = 0; i < teas.length; i++) {
+  if (teas[i].length > teaName.length) {
+    teaName = teas[i];
+  }
+}
+console.log(teaName);
+
+// Problem: create a new array with reversed order
+
+let reveresedTeas = [];
+for (let i = 0; i < teas.length; i++) {
+  reveresedTeas.unshift(teas[i]);
+}
+console.log(reveresedTeas);
