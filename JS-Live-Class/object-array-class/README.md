@@ -37,3 +37,5 @@
 ## Object to string (Serialization of JSON) AND string to Object (De-Serialization of JSON)
 
 ## teleportation is also Serialization and Deserialization of a human. Human to Binary, Binary to human
+
+## for of does not work on objects why?
