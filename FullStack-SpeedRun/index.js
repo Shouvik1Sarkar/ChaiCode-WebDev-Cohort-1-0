@@ -2,7 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import cors from "cors";
-import nodemailer from "nodemailer";
+// import nodemailer from "nodemailer";
+import cookieParser from "cookie-parser";
 import db from "./utils/db.utils.js";
 
 // routes
@@ -19,7 +20,7 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
