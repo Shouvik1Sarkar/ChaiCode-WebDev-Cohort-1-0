@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import mongoose, { Schema } from "mongoose";
+import { type } from "os";
 
 const userSchema = new Schema(
   {
@@ -44,6 +45,10 @@ const userSchema = new Schema(
     },
     refreshToken: {
       type: String,
+    },
+    isLoggedIn: {
+      type: Boolean,
+      default: false,
     },
     forgotPasswordToken: {
       type: String,

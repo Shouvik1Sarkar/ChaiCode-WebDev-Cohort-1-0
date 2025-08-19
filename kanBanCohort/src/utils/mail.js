@@ -33,7 +33,7 @@ const sendEmail = async (options) => {
   });
 
   const mail = {
-    from: "mail.taskmanager@example.com", // We can name this anything. The mail will go to your Mailtrap inbox
+    from: "noreply@example.com", // We can name this anything. The mail will go to your Mailtrap inbox
     to: options.email, // receiver's mail
     subject: options.subject, // mail subject
     text: emailTextual, // mailgen content textual variant
