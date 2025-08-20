@@ -29,6 +29,16 @@ const registerUser = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(500, "❌User not created❌");
   }
+  const jwtToken = await user.generateAccessToken();
+  console.log("CONST JWT TOKEN: ", jwtToken);
+
+  const accessTokenData = {
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 24 * 60 * 60 * 1000,
+  };
+
+  res.cookie("reg_access_token", jwtToken, accessTokenData);
 
   const validationToken = user.generateTemporaryToken();
   console.log(validationToken.hashedToken);
@@ -87,7 +97,14 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "❌User not found.❌");
   }
 
-  const accessToken = user.generateAccessToken();
+  const isMatch = await user.isPasswordCorrect(password);
+  console.log("PASS: ", isMatch);
+
+  if (!isMatch) {
+    throw new ApiError(500, "❌Password did not match❌");
+  }
+
+  const accessToken = await user.generateAccessToken();
 
   console.log("AccessToken: ", accessToken);
   const accessTokenData = {
@@ -152,9 +169,29 @@ const logoutUser = asyncHandler(async (req, res) => {
 });
 
 const resendEmailVerification = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
+  const jwt_token = req.user;
+  if (!jwt_token) {
+    throw new ApiError(500, "JWT TOKEN not found");
+  }
 
+  const user = await User.findById({ _id: jwt_token._id });
+  if (!user) {
+    throw new ApiError(500, "User not found");
+  }
+  const validationToken = user.generateTemporaryToken();
+  console.log(validationToken.hashedToken);
+  const url_sent = `http://localhost:3000/api/v1/users/auth/verify/${validationToken.unHashedToken}`;
+  const email = user.email;
+  sendEmail({
+    email,
+    subject: "resend email verification",
+    mailgenContent: emailVerificationMailgenContent(user.username, url_sent),
+  });
   //validation
+  user.emailVerificationToken = validationToken.hashedToken;
+  user.emailVerificationExpiry = validationToken.tokenExpiry;
+  await user.save();
+  return res.status(200).json(new ApiResponse(200, "resend successful"));
 });
 const resetForgottenPassword = asyncHandler(async (req, res) => {
   const { email, username, password, role } = req.body;
