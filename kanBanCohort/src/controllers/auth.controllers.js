@@ -3,7 +3,11 @@ import { asyncHandler } from "../utils/async-handler.js";
 import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/api-error.js";
 import { ApiResponse } from "../utils/api-response.js";
-import { sendEmail, emailVerificationMailgenContent } from "../utils/mail.js";
+import {
+  sendEmail,
+  emailVerificationMailgenContent,
+  forgotPasswordMailgenContent,
+} from "../utils/mail.js";
 import { cookie } from "express-validator";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -206,9 +210,40 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const forgotPasswordRequest = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
+  let { email, username } = req.body;
+  if (!email && !username) {
+    throw new ApiError("Email and username both can not be empty.");
+  }
 
   //validation
+
+  const user = await User.findOne({ $or: [{ email }, { username }] });
+
+  if (!user) {
+    throw new ApiError("User not found");
+  }
+  const forgotPassToken = user.generateTemporaryToken();
+  console.log("Forgotten Password: ", forgotPassToken);
+  const sentUrl = `http://localhost:3000/api/v1/users/auth/verify/${forgotPassToken.unHashedToken}`;
+
+  const userEmail = user.email;
+  const myName = user.username;
+  console.log("userEmail: ", userEmail);
+
+  email = user.email;
+  console.log("Email: ", email);
+  sendEmail({
+    email,
+    subject: "forgot Password request url",
+    mailgenContent: forgotPasswordMailgenContent(user.username, sentUrl),
+  });
+
+  user.forgotPasswordToken = forgotPassToken.hashedToken;
+  user.forgotPasswordExpiry = forgotPassToken.tokenExpiry;
+  await user.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Forgot pass request token"));
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  forgotPasswordRequest,
   getMe,
   loginUser,
   logoutUser,
@@ -9,6 +10,7 @@ import {
 } from "../controllers/auth.controllers.js";
 import { validate } from "../middlewares/validator.middleware.js";
 import {
+  userForgotPasswordValidator,
   userLoginValidator,
   userRegisterValidator,
 } from "../validators/index.js";
@@ -28,4 +30,7 @@ router
   .route("/resendvalidaton")
   .get(resendValidateToken, resendEmailVerification);
 
+router
+  .route("/forgotpassreq")
+  .post(userForgotPasswordValidator(), validate, forgotPasswordRequest);
 export default router;

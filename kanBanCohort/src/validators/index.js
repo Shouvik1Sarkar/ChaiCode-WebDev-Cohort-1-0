@@ -46,11 +46,14 @@ const userChangeCurrentPasswordValidator = () => {
 
 const userForgotPasswordValidator = () => {
   return [
-    body("email")
-      .notEmpty()
-      .withMessage("Email is required")
-      .isEmail()
-      .withMessage("Email is invalid"),
+    body().custom((value, { req }) => {
+      if (!req.body.email && !req.body.username) {
+        throw new Error("Either email or username is required");
+      }
+      return true;
+    }),
+    body("email").optional().isEmail().withMessage("Email is invalid"),
+    body("username").optional().trim(),
   ];
 };
 
