@@ -198,8 +198,27 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, "resend successful"));
 });
 const resetForgottenPassword = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
+  const { token } = req.params;
+  const { password } = req.body;
+  if (!token) {
+    throw new ApiError(500, "No token found.");
+  }
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const user = await User.findOne({
+    forgotPasswordToken: hashedToken,
+    forgotPasswordExpiry: { $gt: Date.now() },
+  });
+  console.log(" hashedToken: ", hashedToken);
+  console.log("USER: ", user);
+  if (!user) {
+    throw new ApiError(500, "User token not found.");
+  }
+  user.password = password;
+  user.forgotPasswordExpiry = undefined;
+  user.forgotPasswordToken = undefined;
+  await user.save();
 
+  return res.status(200).json(new ApiResponse(201, "✅password changed✅"));
   //validation
 });
 
@@ -224,7 +243,8 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
   }
   const forgotPassToken = user.generateTemporaryToken();
   console.log("Forgotten Password: ", forgotPassToken);
-  const sentUrl = `http://localhost:3000/api/v1/users/auth/verify/${forgotPassToken.unHashedToken}`;
+  const token = forgotPassToken.unHashedToken;
+  const sentUrl = `http://localhost:3000/api/v1/users/auth/verify/${token}`;
 
   const userEmail = user.email;
   const myName = user.username;
@@ -247,15 +267,56 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
-
+  const { password, newPassword, newPassword_again } = req.body;
+  const accessTokenData = req.user;
   //validation
+  if (!accessTokenData) {
+    throw new ApiError(500, "Access token data not found");
+  }
+  const user = await User.findById({
+    _id: accessTokenData._id,
+  });
+
+  if (!user) {
+    throw new ApiError(500, "User not found");
+  }
+  console.log("new pass", newPassword);
+  console.log("new pass again", newPassword_again);
+  if (newPassword_again != newPassword) {
+    throw new ApiError(400, "New password and confirmation do not match.");
+  }
+  const isMatch = await user.isPasswordCorrect(password);
+  if (!isMatch) {
+    throw new ApiError(400, "Wrong Password.");
+  }
+
+  const isNewPassSame = await user.isPasswordCorrect(newPassword);
+
+  if (isNewPassSame) {
+    throw new ApiError(400, "New Password can not be same as old password.");
+  }
+  user.password = newPassword;
+  await user.save();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "password updated successfully."));
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
-
+  const accessTokenData = req.user;
   //validation
+  if (!accessTokenData) {
+    throw new ApiError(500, "Access token data not found");
+  }
+  const user = await User.findById({
+    _id: accessTokenData._id,
+  });
+
+  if (!user) {
+    throw new ApiError(500, "User not found");
+  }
+
+  return res.status(200).json(new ApiResponse(201, "✅Get Me✅"));
 });
 
 export {
