@@ -27,6 +27,33 @@ const validateToken = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired token");
   }
 });
+
+const validateRefreshToken = asyncHandler(async (req, res, next) => {
+  const refreshToken = req.cookies?.refreshToken;
+
+  if (!refreshToken) {
+    throw new ApiError(500, "Refresh Token not found.");
+  }
+
+  console.log("A: ", refreshToken);
+  try {
+    const decodedData = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    console.log("User from Acess Data: ", decodedData);
+    if (!decodedData) {
+      throw new ApiError(500, "Decoded data not found.");
+    }
+    req.userRefresh = decodedData;
+    next();
+  } catch (error) {
+    console.log("TOKEN VERIFICATION ERROR refresh:", error);
+    throw new ApiError(401, "Invalid or expired token");
+  }
+});
+
 const resendValidateToken = asyncHandler(async (req, res, next) => {
   const regaccessToken = req.cookies?.reg_access_token;
 
@@ -51,7 +78,7 @@ const resendValidateToken = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired token");
   }
 });
-export { validateToken, resendValidateToken };
+export { validateToken, resendValidateToken, validateRefreshToken };
 
 /**
  *  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OGE1ZjAwYjNiMzBjMjM0MmM3ZjUwYjciLCJlbWFpbCI6InNob3V2aWtAZXhhbXBsZTMuY29tIiwidXNlcm5hbWUiOiJzaG91dmlrYXV0aDMiLCJpYXQiOjE3NTU3MDUzNTUsImV4cCI6MTc1NTc5MTc1NX0.no8-RJwrbUQ7OMh9oq2SlRJzqre46ms4esYWBr4cGMg

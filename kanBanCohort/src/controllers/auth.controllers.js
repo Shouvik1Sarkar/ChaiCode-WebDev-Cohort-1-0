@@ -34,7 +34,9 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "❌User not created❌");
   }
   const jwtToken = await user.generateAccessToken();
+  const refreshToken = await user.generateRefreshToken();
   console.log("CONST JWT TOKEN: ", jwtToken);
+  console.log("CONST REFRESH TOKEN: ", refreshToken);
 
   const accessTokenData = {
     httpOnly: true,
@@ -44,16 +46,25 @@ const registerUser = asyncHandler(async (req, res) => {
 
   res.cookie("reg_access_token", jwtToken, accessTokenData);
 
+  const refreshTokenData = {
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 10 * 24 * 60 * 60 * 1000,
+  };
+
+  res.cookie("refreshToken", refreshToken, refreshTokenData);
+
   const validationToken = user.generateTemporaryToken();
   console.log(validationToken.hashedToken);
 
   const url_sent = `http://localhost:3000/api/v1/users/auth/verify/${validationToken.unHashedToken}`;
 
-  sendEmail({
-    email,
-    subject: "Verify your registration",
-    mailgenContent: emailVerificationMailgenContent(username, url_sent),
-  });
+  // sendEmail({
+  //   email,
+  //   subject: "Verify your registration",
+  //   mailgenContent: emailVerificationMailgenContent(username, url_sent),
+  // });
+  console.log("Verify your registration (url_sent): ", url_sent);
 
   user.emailVerificationToken = validationToken.hashedToken;
   user.emailVerificationExpiry = validationToken.tokenExpiry;
@@ -186,17 +197,19 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
   console.log(validationToken.hashedToken);
   const url_sent = `http://localhost:3000/api/v1/users/auth/verify/${validationToken.unHashedToken}`;
   const email = user.email;
-  sendEmail({
-    email,
-    subject: "resend email verification",
-    mailgenContent: emailVerificationMailgenContent(user.username, url_sent),
-  });
+  // sendEmail({
+  //   email,
+  //   subject: "resend email verification",
+  //   mailgenContent: emailVerificationMailgenContent(user.username, url_sent),
+  // });
+  console.log("resend email verification (url_sent): ", url_sent);
   //validation
   user.emailVerificationToken = validationToken.hashedToken;
   user.emailVerificationExpiry = validationToken.tokenExpiry;
   await user.save();
   return res.status(200).json(new ApiResponse(200, "resend successful"));
 });
+
 const resetForgottenPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
@@ -223,9 +236,30 @@ const resetForgottenPassword = asyncHandler(async (req, res) => {
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const { email, username, password, role } = req.body;
-
+  const refreshTokenData = req.userRefresh;
   //validation
+  if (!refreshTokenData) {
+    throw new ApiError(401, "❌Access token data not found❌");
+  }
+  const user = await User.findById({
+    _id: refreshTokenData._id,
+  });
+
+  if (!user) {
+    throw new ApiError(404, "❌User not found❌");
+  }
+  const newAccessToken = await user.generateAccessToken();
+  const newAccessTokenData = {
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 30 * 60 * 1000,
+  };
+  // res.cookie("accessToken", newAccessToken, newAccessTokenData);
+
+  return res
+    .cookie("accessToken", newAccessToken, newAccessTokenData)
+    .status(200)
+    .json(new ApiResponse(200, "✅`Access token refreshed successfully✅`"));
 });
 
 const forgotPasswordRequest = asyncHandler(async (req, res) => {
@@ -332,3 +366,15 @@ export {
   verifyEmail,
   getMe,
 };
+//
+
+/* eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+  .eyJfaWQiOiI2OGE4MjEwYTRlOWIwY2VlNjMyYzJmODciLCJlbWFpbCI6InNob3V2aWtAZXhhbXBsZTEuY29tIiwidXNlcm5hbWUiOiJzaG91dmlrYXV0aDEiLCJpYXQiOjE3NTU4NDkwMzUsImV4cCI6MTc1NTkzNTQzNX0
+  .fz994DJbHgEiFWC9HlV3QueZEbi7r22668JeAkc2r - I; */
+
+/**
+   
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2OGE5NTZlZTRiODE3ZThhZWMzNjQ3OTMiLCJlbWFpbCI6InNo
+b3V2aWtAZXhhbXBsZS5jb20iLCJ1c2VybmFtZSI6InNob3V2aWthdXRoIiwiaWF0IjoxNzU1OTMwNDI4LCJleHAiOjE3NTU5MzIyMjh9.Qmq3Iaip62bewdDQaFjvuBRenkkM267RZLcjs4q4Y6A
+   */

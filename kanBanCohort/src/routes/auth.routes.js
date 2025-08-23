@@ -5,6 +5,7 @@ import {
   getMe,
   loginUser,
   logoutUser,
+  refreshAccessToken,
   registerUser,
   resendEmailVerification,
   resetForgottenPassword,
@@ -19,6 +20,7 @@ import {
 import {
   validateToken,
   resendValidateToken,
+  validateRefreshToken,
 } from "../middlewares/tokenValidators.middlewares.js";
 
 const router = Router();
@@ -37,4 +39,5 @@ router
   .post(userForgotPasswordValidator(), validate, forgotPasswordRequest);
 router.route("/changepass/:token").post(resetForgottenPassword);
 router.post("/reset", validateToken, changeCurrentPassword);
+router.get("/refresh", validateRefreshToken, refreshAccessToken);
 export default router;
