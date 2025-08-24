@@ -1,4 +1,4 @@
-const globalErrorHandle = async (err, req, res, next) => {
+const globalErrorHandle = (err, req, res, next) => {
   const message = err.message || "Internal server error";
   const statusCode = err.statusCode || 522;
 
