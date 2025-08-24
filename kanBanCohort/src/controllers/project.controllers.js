@@ -253,7 +253,7 @@ const addMemberToProject = async (req, res) => {
     .json(new ApiResponse(200, project, "addition complete"));
 };
 
-const deleteMember = async (req, res) => {
+const deleteMember = asyncHandler(async (req, res) => {
   // delete member from project
   const user_data = req.user;
   console.log("UserData: ", user_data);
@@ -287,15 +287,25 @@ const deleteMember = async (req, res) => {
   }
   const { memberName } = req.body;
   if (!memberName) {
-    throw new ApiError(500, "Member bot found.");
+    throw new ApiError(500, "Can't keep name field empty.");
   }
 
-  console.log("MEMBERS: ", project.members);
-};
+  console.log("MEMBERS: ", memberName);
+  project.members.forEach((m) => {
+    if (m.user.toString() === memberName) {
+      project.members.splice(project.members.indexOf(m), 1);
+    }
+  });
+  await project.save();
+
+  console.log("-----after delete", project.members);
+  return res.status(200).json(new ApiResponse(200, project, "Member deleted"));
+});
 
 const updateMemberRole = asyncHandler(async (req, res) => {
   // update member role
   const user_data = req.user;
+
   console.log("UserData: ", user_data);
 
   if (!user_data) {
@@ -306,6 +316,40 @@ const updateMemberRole = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(403, "User not found. ");
   }
+  const { projectId } = req.params;
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found. ");
+  }
+
+  let isAdmin = false;
+
+  // if true isAdmin is True
+
+  isAdmin = project.members.some(
+    (m) =>
+      m.user.toString() === user._id.toString() && m.role == "project_admin"
+  );
+
+  if (!isAdmin) {
+    throw new ApiError(500, "You are not admin.");
+  }
+  const { memberName, role } = req.body;
+  if (!memberName) {
+    throw new ApiError(500, "Can't keep name field empty.");
+  }
+
+  console.log("MEMBERS: ", memberName);
+  project.members.forEach((m) => {
+    if (m.user.toString() === memberName) {
+      m.role = role;
+    }
+  });
+  await project.save();
+
+  console.log("-----after delete", project.members);
+  return res.status(200).json(new ApiResponse(200, project, "Member deleted"));
 });
 
 export {

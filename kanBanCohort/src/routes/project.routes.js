@@ -3,10 +3,12 @@ import { validateToken } from "../middlewares/tokenValidators.middlewares.js";
 import {
   addMemberToProject,
   createProject,
+  deleteMember,
   deleteProject,
   getProjectById,
   getProjectMembers,
   getProjects,
+  updateMemberRole,
   updateProject,
 } from "../controllers/project.controllers.js";
 
@@ -23,5 +25,9 @@ router
 router
   .route("/addMemberToProject/:projectId")
   .get(validateToken, addMemberToProject);
+router.route("/deleteMember/:projectId").post(validateToken, deleteMember);
+router
+  .route("/updateMemberRole/:projectId")
+  .post(validateToken, updateMemberRole);
 
 export default router;
