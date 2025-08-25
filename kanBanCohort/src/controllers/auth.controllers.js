@@ -135,7 +135,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(201, "✅User Login Successful.✅"));
+    .json(new ApiResponse(201, user, "✅User Login Successful.✅"));
   //validation
 });
 

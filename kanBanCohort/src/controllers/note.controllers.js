@@ -1,23 +1,25 @@
 // boilderplate code
 
-const getNotes = async (req, res) => {
+import { asyncHandler } from "../utils/async-handler";
+
+const getNotes = asyncHandler(async (req, res) => {
   // get all notes
-};
+});
 
-const getNoteById = async (req, res) => {
+const getNoteById = asyncHandler(async (req, res) => {
   // get note by id
-};
+});
 
-const createNote = async (req, res) => {
+const createNote = asyncHandler(async (req, res) => {
   // create note
-};
+});
 
-const updateNote = async (req, res) => {
+const updateNote = asyncHandler(async (req, res) => {
   // update note
-};
+});
 
-const deleteNote = async (req, res) => {
+const deleteNote = asyncHandler(async (req, res) => {
   // delete note
-};
+});
 
 export { createNote, deleteNote, getNoteById, getNotes, updateNote };
